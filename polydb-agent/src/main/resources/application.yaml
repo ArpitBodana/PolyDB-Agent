@@ -1,0 +1,33 @@
+server:
+  port: 8081
+
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen2.5:3b
+      embedding:
+        options:
+          model: nomic-embed-text
+
+    mcp:
+      client:
+        enabled: true
+
+        toolcallback:
+          enabled: true
+
+        streamable-http:
+          connections:
+            postgres:
+              url: http://localhost:8080/mcp
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework.ai: DEBUG
+    io.modelcontextprotocol: DEBUG
+    org.springframework.ai.mcp: DEBUG

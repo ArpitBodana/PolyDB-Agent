@@ -1,0 +1,28 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: mongodb-mcp
+  data:
+    mongodb:
+      uri: mongodb://admin:password@localhost:27017/agentdb?authSource=admin
+
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen2.5:3b
+      embedding:
+        options:
+          model: nomic-embed-text
+
+  docker:
+    compose:
+      enabled: true
+      lifecycle-management: start-and-stop
+
+logging:
+  level:
+    org.springframework.ai: DEBUG

@@ -1,0 +1,34 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: postgresql-mcp
+  datasource:
+    url: jdbc:postgresql://localhost:5432/appdb
+    username: postgres
+    password: postgres
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 10
+      idle-timeout: 600000
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        protocol: STREAMABLE
+        name: postgres-mcp-server
+        version: 1.0.0
+        streamable-http:
+          mcp-endpoint: /mcp
+          keep-alive-interval: 30s
+
+        tool-change-notification: true
+        resource-change-notification: true
+        prompt-change-notification: true
+
+logging:
+  level:
+    root: INFO
+  file:
+    name: logs/postgresqlmcp.log
