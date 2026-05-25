@@ -7,7 +7,8 @@ spring:
       base-url: http://localhost:11434
       chat:
         options:
-          model: qwen2.5:3b
+          model: qwen2.5:3b-instruct-q4_K_M
+          temperature: 0.1
       embedding:
         options:
           model: nomic-embed-text
@@ -15,10 +16,8 @@ spring:
     mcp:
       client:
         enabled: true
-
         toolcallback:
           enabled: true
-
         streamable-http:
           connections:
             postgres:
@@ -29,5 +28,5 @@ logging:
   level:
     root: INFO
     org.springframework.ai: DEBUG
-    io.modelcontextprotocol: DEBUG
-    org.springframework.ai.mcp: DEBUG
+    io.modelcontextprotocol: INFO
+    org.springframework.ai.mcp: INFO

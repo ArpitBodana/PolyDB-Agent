@@ -6,6 +6,8 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -16,9 +18,12 @@ public class PostgresAgentTool {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Tool(name="postgres_create", description = "Create table")
+    @Tool(name = "postgres_create", description = "Create table")
     public String createTable(String tableName, String schema) {
         String sql = null;
+        log.info("create table called: tableName={}, schema={}",
+                tableName,
+                schema);
 
         try {
             if (!tableName.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
@@ -28,7 +33,8 @@ public class PostgresAgentTool {
 
             sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + schema + ")";
 
-            log.info("[postgres_create] Executing SQL: {}", sql);
+            log.info("[postgres_create] " +
+                    "Executing SQL: {}", sql);
 
             jdbcTemplate.execute(sql);
 
@@ -41,10 +47,15 @@ public class PostgresAgentTool {
         }
     }
 
-    @Tool(name="postgres_insert", description = "Insert into table")
-    public String insert(String table, Map<String, Object> data) {
+
+    @Tool(name = "postgres_insert", description = "Insert one or more rows into a table")
+    public String insert(String table, String[] columns, Object[][] values) {
 
         String sql = null;
+        log.info("insert called: table={}, columns={}, values={}",
+                table,
+                Arrays.toString(columns),
+                Arrays.deepToString(values));
 
         try {
             if (!table.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
@@ -52,62 +63,102 @@ public class PostgresAgentTool {
                 return "Invalid table name";
             }
 
-            String cols = String.join(", ", data.keySet());
-            String placeholders = String.join(", ", data.keySet().stream().map(k -> "?").toList());
+            String cols = String.join(", ", columns);
+            String placeholders = String.join(", ", java.util.Collections.nCopies(columns.length, "?"));
 
             sql = "INSERT INTO " + table +
                     " (" + cols + ") VALUES (" + placeholders + ")";
 
-            log.info("[postgres_insert] Executing SQL: {} | values={}", sql, data.values());
+            log.info("[postgres_insert] Executing SQL: {} | values={}", sql, values);
 
-            jdbcTemplate.update(sql, data.values().toArray());
+//            jdbcTemplate.batchUpdate(sql, Arrays.asList(values));
+
+            if (values.length == 1) {
+                jdbcTemplate.update(sql, values[0]);
+            } else {
+                jdbcTemplate.batchUpdate(sql, Arrays.asList(values));
+            }
 
             log.info("[postgres_insert] Success");
             return "OK";
 
         } catch (Exception e) {
-            log.error("[postgres_insert] Failed SQL: {} | data={}", sql, data, e);
+            log.error("[postgres_insert] Failed SQL: {} | data={}", sql, values, e);
             return "ERROR: " + e.getMessage();
         }
     }
 
-    @Tool(name="postgres_update", description = "Update table rows")
+    @Tool(name = "postgres_update", description = "Update table rows")
     public String update(String table,
-                         Map<String, Object> data,
-                         String where,
-                         Object[] args) {
+                         String[] columns,
+                         Object[] values,
+                         String whereColumn,
+                         String whereValue) {
 
-        String sql = null;
+        // SAFE LOGGING (no NPE, no ToolContext leaks)
+        log.info("update called: table={}, columns={}, values={}, whereColumn={}, whereValue={}",
+                table,
+                Arrays.toString(columns),
+                Arrays.toString(values),
+                whereColumn,
+                whereValue
+        );
+
+        // VALIDATION
+        if (table == null || !table.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+            return "Invalid table name";
+        }
+
+        if (columns == null || values == null || columns.length != values.length) {
+            return "Columns and values must be non-null and of same length";
+        }
+
+        if (whereColumn == null || !whereColumn.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+            return "Invalid whereColumn";
+        }
+
+        if (whereValue.trim().isEmpty()) {
+            return "Invalid whereValue";
+        }
+
+        // BUILD SET CLAUSE SAFELY
+        String setClause = java.util.Arrays.stream(columns)
+                .map(col -> col + "=?")
+                .collect(java.util.stream.Collectors.joining(", "));
+
+        String sql = "UPDATE " + table +
+                " SET " + setClause +
+                " WHERE " + whereColumn + "=?";
+
+        // BUILD PARAMETERS (STRICT ORDER)
+        List<Object> params = new ArrayList<>();
+
+        for (Object v : values) {
+            if (v instanceof java.util.List<?>) {
+                params.addAll((java.util.List<?>) v);
+            } else {
+                params.add(v);
+            }
+        }
+
+        params.add(whereValue);
 
         try {
-            if (!table.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-                log.warn("[postgres_update] Invalid table name: {}", table);
-                return "Invalid table name";
-            }
-
-            String set = String.join(", ",
-                    data.keySet().stream().map(k -> k + "=?").toList()
-            );
-
-            Object[] params = concat(data.values().toArray(), args);
-
-            sql = "UPDATE " + table + " SET " + set + " WHERE " + where;
-
-            log.info("[postgres_update] Executing SQL: {} | params={}", sql, params);
-
-            jdbcTemplate.update(sql, params);
-
+            jdbcTemplate.update(sql, params.toArray());
             log.info("[postgres_update] Success");
             return "OK";
 
         } catch (Exception e) {
-            log.error("[postgres_update] Failed SQL: {}", sql, e);
+            log.error("[postgres_update] Failed SQL: {} | params={}",
+                    sql,
+                    params,
+                    e);
             return "ERROR: " + e.getMessage();
         }
     }
 
-    @Tool(name="postgres_delete", description = "Delete from table")
-    public String delete(String table, String where, Object[] args) {
+    @Tool(name = "postgres_delete", description = "Delete from table")
+    public String delete(String table, String whereColumn, Object whereValue) {
 
         String sql = null;
 
@@ -117,13 +168,12 @@ public class PostgresAgentTool {
                 return "Invalid table name";
             }
 
-            sql = "DELETE FROM " + table + " WHERE " + where;
+            sql = "DELETE FROM " + table + " WHERE " + whereColumn + "=?";
 
-            log.info("[postgres_delete] Executing SQL: {} | args={}", sql, args);
-
-            jdbcTemplate.update(sql, args);
+            jdbcTemplate.update(sql, whereValue);
 
             log.info("[postgres_delete] Success");
+
             return "OK";
 
         } catch (Exception e) {
@@ -132,8 +182,10 @@ public class PostgresAgentTool {
         }
     }
 
-    @Tool(name="postgres_query", description = "Select from table")
-    public List<Map<String, Object>> query(String table, String where, Object[] args) {
+    @Tool(name = "postgres_query", description = "Select from table")
+    public List<Map<String, Object>> query(String table,
+                                           String whereColumn,
+                                           Object whereValue) {
 
         String sql = null;
 
@@ -143,14 +195,18 @@ public class PostgresAgentTool {
                 return List.of(Map.of("error", "Invalid table"));
             }
 
-            sql = "SELECT * FROM " + table +
-                    (where == null || where.isBlank() ? "" : " WHERE " + where);
+            Object[] params;
 
-            log.info("[postgres_query] Executing SQL: {} | args={}", sql, args);
+            if (whereColumn == null || whereColumn.isBlank()) {
+                sql = "SELECT * FROM " + table;
+                params = new Object[]{};
+            } else {
+                sql = "SELECT * FROM " + table + " WHERE " + whereColumn + "=?";
+                params = new Object[]{whereValue};
+            }
+            log.info("[postgres_query] Executing SQL: {} | args={}", sql, params);
 
-            List<Map<String, Object>> result =
-                    jdbcTemplate.queryForList(sql, args == null ? new Object[]{} : args);
-
+            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql, params);
             log.info("[postgres_query] Success | rows={}", result.size());
 
             return result;
@@ -159,12 +215,5 @@ public class PostgresAgentTool {
             log.error("[postgres_query] Failed SQL: {}", sql, e);
             return List.of(Map.of("error", e.getMessage()));
         }
-    }
-
-    private Object[] concat(Object[] a, Object[] b) {
-        Object[] r = new Object[a.length + b.length];
-        System.arraycopy(a, 0, r, 0, a.length);
-        System.arraycopy(b, 0, r, a.length, b.length);
-        return r;
     }
 }
