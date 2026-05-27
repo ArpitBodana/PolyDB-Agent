@@ -18,12 +18,24 @@ public class TaskTools {
 
     @Tool(
             name = "create_task",
-            description = "Create a new task with title, description, priority, and assigned user"
+            description = "Create a new task with title, description, priority, assignedTo, and status"
     )
-    public Task createTask(Task task) {
+    public Task createTask(  String title,
+                             String description,
+                             String priority,
+                             String assignedTo,
+                             String status) {
 
         log.info("[create_task] Request received: title={}, priority={}, assignedTo={}",
-                task.getTitle(), task.getPriority(), task.getAssignedTo());
+                title, priority, assignedTo);
+
+        Task task = Task.builder()
+                .title(title)
+                .description(description)
+                .priority(priority)
+                .assignedTo(assignedTo)
+                .status(status)
+                .build();
 
         Task created = taskService.createTask(task);
 

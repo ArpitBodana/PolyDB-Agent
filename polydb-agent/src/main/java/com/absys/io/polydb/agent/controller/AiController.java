@@ -2,6 +2,7 @@ package com.absys.io.polydb.agent.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +19,17 @@ public class AiController {
 
 
     @GetMapping("/query")
-    public ResponseEntity<String> query(@RequestParam String query){
+    public ResponseEntity<String> query(@RequestParam String query, @RequestParam String userId) {
         String result = chatClient
                 .prompt()
                 .user(query)
+                .advisors(advisor -> advisor.param(
+                        ChatMemory.CONVERSATION_ID,
+                        userId
+                ))
                 .call()
                 .content();
 
-        return new ResponseEntity<>(result,HttpStatus.OK);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

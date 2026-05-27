@@ -2,6 +2,9 @@ server:
   port: 8081
 
 spring:
+  data:
+    mongodb:
+      uri: mongodb://admin:1234@localhost:27017/aichatdb?authSource=admin
   ai:
     ollama:
       base-url: http://localhost:11434
@@ -12,6 +15,11 @@ spring:
       embedding:
         options:
           model: nomic-embed-text
+    chat:
+      memory:
+        repository:
+          mongodb:
+            initialize-schema: true
 
     mcp:
       client:
