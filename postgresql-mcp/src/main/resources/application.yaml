@@ -12,6 +12,10 @@ spring:
       maximum-pool-size: 10
       idle-timeout: 600000
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+
   ai:
     mcp:
       server:

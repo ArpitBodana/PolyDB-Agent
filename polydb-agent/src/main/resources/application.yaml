@@ -8,7 +8,7 @@ spring:
       chat:
         options:
           model: qwen2.5:3b-instruct-q4_K_M
-          temperature: 0.1
+          temperature: 0.2
       embedding:
         options:
           model: nomic-embed-text

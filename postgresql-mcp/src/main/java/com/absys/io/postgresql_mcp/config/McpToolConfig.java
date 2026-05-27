@@ -1,6 +1,7 @@
 package com.absys.io.postgresql_mcp.config;
 
-import com.absys.io.postgresql_mcp.tools.PostgresAgentTool;
+import com.absys.io.postgresql_mcp.tools.TaskTools;
+import com.absys.io.postgresql_mcp.tools.UserTools;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.boot.CommandLineRunner;
@@ -11,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
 public class McpToolConfig {
 
     @Bean
-    public ToolCallbackProvider postgresTools(PostgresAgentTool tool) {
+    public ToolCallbackProvider postgresTools(UserTools userTools, TaskTools taskTools) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(tool)
+                .toolObjects(userTools, taskTools)
                 .build();
     }
 
