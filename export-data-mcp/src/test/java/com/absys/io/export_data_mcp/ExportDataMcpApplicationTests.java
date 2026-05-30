@@ -1,10 +1,10 @@
-package com.absys.io.mongodb_mcp;
+package com.absys.io.export_data_mcp;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MongodbMcpApplicationTests {
+class ExportDataMcpApplicationTests {
 
 	@Test
 	void contextLoads() {

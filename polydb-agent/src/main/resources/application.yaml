@@ -2,24 +2,34 @@ server:
   port: 8081
 
 spring:
-  data:
-    mongodb:
-      uri: mongodb://admin:1234@localhost:27017/aichatdb?authSource=admin
+#  data:
+#    mongodb:
+#      uri: mongodb://admin:1234@localhost:27017/aichatdb?authSource=admin
+#  ai:
+#    ollama:
+#      base-url: http://localhost:11434
+#      chat:
+#        options:
+#          model: qwen2.5:3b-instruct-q4_K_M
+#          temperature: 0.2
+#      embedding:
+#        options:
+#          model: nomic-embed-text
   ai:
-    ollama:
-      base-url: http://localhost:11434
+    openai:
+      api-key: ${API_KEY}
+      base-url: https://api.groq.com/openai
       chat:
         options:
-          model: qwen2.5:3b-instruct-q4_K_M
+          model: llama-3.3-70b-versatile
           temperature: 0.2
-      embedding:
-        options:
-          model: nomic-embed-text
-    chat:
-      memory:
-        repository:
-          mongodb:
-            initialize-schema: true
+
+
+#    chat:
+#      memory:
+#        repository:
+#          mongodb:
+#            initialize-schema: true
 
     mcp:
       client:
@@ -30,6 +40,8 @@ spring:
           connections:
             postgres:
               url: http://localhost:8080/mcp
+            export data:
+              url: http://localhost:8091/mcp
 
 
 logging:
@@ -37,4 +49,4 @@ logging:
     root: INFO
     org.springframework.ai: DEBUG
     io.modelcontextprotocol: INFO
-    org.springframework.ai.mcp: INFO
+    org.springframework.ai.mcp: DEBUG

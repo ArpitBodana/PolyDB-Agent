@@ -34,5 +34,5 @@ spring:
 logging:
   level:
     root: INFO
-  file:
-    name: logs/postgresqlmcp.log
+#  file:
+#    name: logs/postgresqlmcp.log

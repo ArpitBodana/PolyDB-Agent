@@ -1,13 +1,13 @@
-package com.absys.io.mongodb_mcp;
+package com.absys.io.export_data_mcp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MongodbMcpApplication {
+public class ExportDataMcpApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MongodbMcpApplication.class, args);
+		SpringApplication.run(ExportDataMcpApplication.class, args);
 	}
 
 }

@@ -33,11 +33,11 @@ public class AiConfig {
 
 
     @Bean
-    public ChatClient ollamaChatClient(ChatClient.Builder builder, ToolCallbackProvider toolCallbackProvider, ChatMemory chatMemory) {
+    public ChatClient ChatClient(ChatClient.Builder builder, ToolCallbackProvider toolCallbackProvider) {
         return builder
                 .defaultSystem(systemPrompt)
                 .defaultToolCallbacks(toolCallbackProvider)
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(), new SimpleLoggerAdvisor())
+                .defaultAdvisors(new SimpleLoggerAdvisor())
                 .build();
     }
 

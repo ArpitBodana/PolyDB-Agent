@@ -19,14 +19,10 @@ public class AiController {
 
 
     @GetMapping("/query")
-    public ResponseEntity<String> query(@RequestParam String query, @RequestParam String userId) {
+    public ResponseEntity<String> query(@RequestParam String query) {
         String result = chatClient
                 .prompt()
                 .user(query)
-                .advisors(advisor -> advisor.param(
-                        ChatMemory.CONVERSATION_ID,
-                        userId
-                ))
                 .call()
                 .content();
 
